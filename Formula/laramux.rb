@@ -10,7 +10,7 @@ class Laramux < Formula
   on_macos do
     on_arm do
       url "https://github.com/jonaspauleta/laramux/releases/download/v#{version}/laramux-macos-aarch64"
-      sha256 "PLACEHOLDER_MACOS_ARM64_SHA256"
+      sha256 "10fe6c548aff132bc3359c8b9feb425570b18a4e0c40401d18daea34d20f342f"
 
       def install
         bin.install "laramux-macos-aarch64" => "laramux"
@@ -19,7 +19,7 @@ class Laramux < Formula
 
     on_intel do
       url "https://github.com/jonaspauleta/laramux/releases/download/v#{version}/laramux-macos-x86_64"
-      sha256 "PLACEHOLDER_MACOS_X86_64_SHA256"
+      sha256 "7b75229d61bb8a33b55683380d2d403c601295fccb4521a9fbbae467b5d557d7"
 
       def install
         bin.install "laramux-macos-x86_64" => "laramux"
@@ -30,7 +30,7 @@ class Laramux < Formula
   on_linux do
     on_arm do
       url "https://github.com/jonaspauleta/laramux/releases/download/v#{version}/laramux-linux-aarch64"
-      sha256 "PLACEHOLDER_LINUX_ARM64_SHA256"
+      sha256 "2c0d51439fc13a0d0574fdf33ed16ab831e6707d43ff5346c1aeb3e4de421f28"
 
       def install
         bin.install "laramux-linux-aarch64" => "laramux"
@@ -39,7 +39,7 @@ class Laramux < Formula
 
     on_intel do
       url "https://github.com/jonaspauleta/laramux/releases/download/v#{version}/laramux-linux-x86_64"
-      sha256 "PLACEHOLDER_LINUX_X86_64_SHA256"
+      sha256 "8e5e24c292fb4ac4642a55558649453dd3b6d6f598e4fd23c9ea3382ec965ec9"
 
       def install
         bin.install "laramux-linux-x86_64" => "laramux"
