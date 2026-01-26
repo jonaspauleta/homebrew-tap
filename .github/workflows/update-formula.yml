@@ -1,0 +1,74 @@
+name: Update Formula
+
+on:
+  repository_dispatch:
+    types: [update-formula]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v0.1.0)'
+        required: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "version=${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download checksums
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          curl -L "https://github.com/jonaspauleta/laramux/releases/download/${VERSION}/checksums.txt" -o checksums.txt
+          cat checksums.txt
+
+      - name: Update formula
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          VERSION_NUM=${VERSION#v}  # Remove 'v' prefix
+
+          # Extract SHA256 hashes
+          MACOS_ARM64=$(grep 'laramux-macos-aarch64$' checksums.txt | awk '{print $1}')
+          MACOS_X86_64=$(grep 'laramux-macos-x86_64$' checksums.txt | awk '{print $1}')
+          LINUX_ARM64=$(grep 'laramux-linux-aarch64$' checksums.txt | awk '{print $1}')
+          LINUX_X86_64=$(grep 'laramux-linux-x86_64$' checksums.txt | awk '{print $1}')
+
+          echo "Version: $VERSION_NUM"
+          echo "macOS ARM64: $MACOS_ARM64"
+          echo "macOS x86_64: $MACOS_X86_64"
+          echo "Linux ARM64: $LINUX_ARM64"
+          echo "Linux x86_64: $LINUX_X86_64"
+
+          # Update formula
+          sed -i "s/version \".*\"/version \"${VERSION_NUM}\"/" Formula/laramux.rb
+          sed -i "s/PLACEHOLDER_MACOS_ARM64_SHA256/${MACOS_ARM64}/" Formula/laramux.rb
+          sed -i "s/PLACEHOLDER_MACOS_X86_64_SHA256/${MACOS_X86_64}/" Formula/laramux.rb
+          sed -i "s/PLACEHOLDER_LINUX_ARM64_SHA256/${LINUX_ARM64}/" Formula/laramux.rb
+          sed -i "s/PLACEHOLDER_LINUX_X86_64_SHA256/${LINUX_X86_64}/" Formula/laramux.rb
+
+          # Also update existing hashes (for subsequent releases)
+          sed -i "s/sha256 \"[a-f0-9]\{64\}\"/sha256 \"PLACEHOLDER\"/g" Formula/laramux.rb
+          sed -i "0,/PLACEHOLDER/{s/PLACEHOLDER/${MACOS_ARM64}/}" Formula/laramux.rb
+          sed -i "0,/PLACEHOLDER/{s/PLACEHOLDER/${MACOS_X86_64}/}" Formula/laramux.rb
+          sed -i "0,/PLACEHOLDER/{s/PLACEHOLDER/${LINUX_ARM64}/}" Formula/laramux.rb
+          sed -i "0,/PLACEHOLDER/{s/PLACEHOLDER/${LINUX_X86_64}/}" Formula/laramux.rb
+
+          cat Formula/laramux.rb
+
+      - name: Commit and push
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/laramux.rb
+          git diff --staged --quiet || git commit -m "Update laramux to ${VERSION}"
+          git push
