@@ -31,12 +31,13 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.version }}
           curl -L "https://github.com/jonaspauleta/laramux/releases/download/${VERSION}/checksums.txt" -o checksums.txt
+          echo "=== Checksums file content ==="
           cat checksums.txt
 
       - name: Update formula
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          VERSION_NUM=${VERSION#v}  # Remove 'v' prefix
+          VERSION_NUM=${VERSION#v}
 
           # Extract SHA256 hashes
           MACOS_ARM64=$(grep 'laramux-macos-aarch64$' checksums.txt | awk '{print $1}')
@@ -44,27 +45,49 @@ jobs:
           LINUX_ARM64=$(grep 'laramux-linux-aarch64$' checksums.txt | awk '{print $1}')
           LINUX_X86_64=$(grep 'laramux-linux-x86_64$' checksums.txt | awk '{print $1}')
 
+          echo "=== Extracted hashes ==="
           echo "Version: $VERSION_NUM"
           echo "macOS ARM64: $MACOS_ARM64"
           echo "macOS x86_64: $MACOS_X86_64"
           echo "Linux ARM64: $LINUX_ARM64"
           echo "Linux x86_64: $LINUX_X86_64"
 
-          # Update formula
-          sed -i "s/version \".*\"/version \"${VERSION_NUM}\"/" Formula/laramux.rb
-          sed -i "s/PLACEHOLDER_MACOS_ARM64_SHA256/${MACOS_ARM64}/" Formula/laramux.rb
-          sed -i "s/PLACEHOLDER_MACOS_X86_64_SHA256/${MACOS_X86_64}/" Formula/laramux.rb
-          sed -i "s/PLACEHOLDER_LINUX_ARM64_SHA256/${LINUX_ARM64}/" Formula/laramux.rb
-          sed -i "s/PLACEHOLDER_LINUX_X86_64_SHA256/${LINUX_X86_64}/" Formula/laramux.rb
+          # Verify we got all hashes
+          if [ -z "$MACOS_ARM64" ] || [ -z "$MACOS_X86_64" ] || [ -z "$LINUX_ARM64" ] || [ -z "$LINUX_X86_64" ]; then
+            echo "ERROR: Failed to extract all checksums"
+            exit 1
+          fi
 
-          # Also update existing hashes (for subsequent releases)
-          sed -i "s/sha256 \"[a-f0-9]\{64\}\"/sha256 \"PLACEHOLDER\"/g" Formula/laramux.rb
-          sed -i "0,/PLACEHOLDER/{s/PLACEHOLDER/${MACOS_ARM64}/}" Formula/laramux.rb
-          sed -i "0,/PLACEHOLDER/{s/PLACEHOLDER/${MACOS_X86_64}/}" Formula/laramux.rb
-          sed -i "0,/PLACEHOLDER/{s/PLACEHOLDER/${LINUX_ARM64}/}" Formula/laramux.rb
-          sed -i "0,/PLACEHOLDER/{s/PLACEHOLDER/${LINUX_X86_64}/}" Formula/laramux.rb
+          # Use Python for reliable formula update
+          python3 << EOF
+          import re
 
-          cat Formula/laramux.rb
+          with open('Formula/laramux.rb', 'r') as f:
+              content = f.read()
+
+          # Update version
+          content = re.sub(r'version "[^"]*"', 'version "${VERSION_NUM}"', content)
+
+          # Find all sha256 lines and update them in order
+          # Order in formula: macos-arm, macos-intel, linux-arm, linux-intel
+          hashes = ['${MACOS_ARM64}', '${MACOS_X86_64}', '${LINUX_ARM64}', '${LINUX_X86_64}']
+
+          # Replace each sha256 line in order
+          sha_pattern = r'sha256 "[^"]*"'
+          matches = list(re.finditer(sha_pattern, content))
+
+          # Replace from end to start to preserve positions
+          for i, match in enumerate(reversed(matches)):
+              hash_idx = len(matches) - 1 - i
+              if hash_idx < len(hashes):
+                  content = content[:match.start()] + f'sha256 "{hashes[hash_idx]}"' + content[match.end():]
+
+          with open('Formula/laramux.rb', 'w') as f:
+              f.write(content)
+
+          print("=== Updated formula ===")
+          print(content)
+          EOF
 
       - name: Commit and push
         run: |
