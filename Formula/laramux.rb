@@ -4,13 +4,13 @@
 class Laramux < Formula
   desc "TUI for managing Laravel development processes"
   homepage "https://github.com/jonaspauleta/laramux"
-  version "1.2.1"
+  version "1.3.0"
   license "MIT"
 
   on_macos do
     on_arm do
       url "https://github.com/jonaspauleta/laramux/releases/download/v#{version}/laramux-macos-aarch64"
-      sha256 "a62072a71c1a82df83812469056b25cfddf9a84455b089f6a49cb8ddb1a245a0"
+      sha256 "27453355a05cce0a57a14f45b58055d1ed6fb8618724fa1d0d80e5d6eb9d32f4"
 
       def install
         bin.install "laramux-macos-aarch64" => "laramux"
@@ -19,7 +19,7 @@ class Laramux < Formula
 
     on_intel do
       url "https://github.com/jonaspauleta/laramux/releases/download/v#{version}/laramux-macos-x86_64"
-      sha256 "5c027d81865806e96e7125d8bc40628349b441b553720f8cdc95d021d92e1565"
+      sha256 "dce77074de8f82bd86eeb026b6c85be363a27dbf9315157e24367f1fa1a65327"
 
       def install
         bin.install "laramux-macos-x86_64" => "laramux"
@@ -30,7 +30,7 @@ class Laramux < Formula
   on_linux do
     on_arm do
       url "https://github.com/jonaspauleta/laramux/releases/download/v#{version}/laramux-linux-aarch64"
-      sha256 "ff67fa6a01927c1e85c4e0d496d2bf26493771b73c4f51f73bc0c7485a81bda2"
+      sha256 "463e7ca5dd8c020aac11c274f726f38c47360c925eab644ee67d72b330c46809"
 
       def install
         bin.install "laramux-linux-aarch64" => "laramux"
@@ -39,7 +39,7 @@ class Laramux < Formula
 
     on_intel do
       url "https://github.com/jonaspauleta/laramux/releases/download/v#{version}/laramux-linux-x86_64"
-      sha256 "12f6f34ab8372218479138c046e24ff611fd928865b71949dc5dea85c3d84a37"
+      sha256 "1208a87c8976a4f23f77779d1185ce0066432945332741a7693df3af21bb429e"
 
       def install
         bin.install "laramux-linux-x86_64" => "laramux"
